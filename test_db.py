@@ -32,11 +32,17 @@ def update_material(db):
 
 
 
-def lookup_person(db):
-    pid = input("单位代号: ")
-    print('----------------------------')
-    print(pid, '==> ', db[pid])
-    print('----------------------------')
+def lookup(db):
+    pid = input('显示指定单位(s):\n===> ')
+    if pid == 'a':                                   # 全部显示
+        for j in list(db.items()):
+            print(j[0], '==>', j[1])
+            print('----------------------------')
+    else:                                            # 显示指定单位
+        print('----------------------------')
+        print(pid, '==> ', db[pid])
+        print('----------------------------')
+
 def enter_command():
     cmd = input("更新(u)、显示(l)、退出(q)\n输入命令: ")
     cmd = cmd.strip().lower()
@@ -50,7 +56,7 @@ def main():
             if cmd == 's':
                 store_data(database)
             elif cmd == 'l':
-                lookup_person(database)
+                lookup(database)
             elif cmd == 'u':
                 update_material(database)
             elif cmd == 'q':
