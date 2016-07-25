@@ -1,6 +1,6 @@
 #! -*- coding:utf-8 -*-
 
-class company():
+class company(): f
     pid = ""
     name = ""
     material_record = ""
