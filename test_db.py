@@ -37,11 +37,11 @@ def lookup(db):
     if pid == 'a':                                   # 全部显示
         for j in list(db.items()):
             print(j[0], '==>', j[1])
-            print('----------------------------')
+            print('-'*52)
     else:                                            # 显示指定单位
-        print('----------------------------')
+        print('-'*52)
         print(pid, '==> ', db[pid])
-        print('----------------------------')
+        print('-'*52)
 
 def enter_command():
     cmd = input("更新(u)、显示(l)、退出(q)\n输入命令: ")
@@ -60,7 +60,7 @@ def main():
             elif cmd == 'u':
                 update_material(database)
             elif cmd == 'q':
-                print("程序已退出!")
+                print("谢谢使用\n程序已退出!")
                 return
     finally:
         database.close()
