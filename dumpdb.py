@@ -6,7 +6,7 @@
 """
 
 def showformat(recs, sept=('-' * 40)):
-    print(len(recs,) 'records')
+    print(len(recs), 'records')
     print(sept)
     for rec in recs:
         maxkey = max(len(key) for key in rec)
@@ -22,20 +22,22 @@ def dumpdb(cursor, table, format=True):
             if not rec: break
             print(rec)
     else:
-        from makedicts import makedicts]
+        from makedicts import makedicts
         recs = makedicts(cursor, 'select * from' + table)
         showformat(recs)
 
 if __name__ == '__main__':
     import sys
     dbname, format, table = 'dbase1', False, 'people'
-        cmdargs = sys.argv[1:]
-        if '-' in cmdargs:
-            format = True
-            cmdargs.remove('-')
-        if cmdargs: dbname = cmdargs.pop(0)
-        if cmdargs: table = cmdargs[0]
+    cmdargs = sys.argv[1:]
+    if '-' in cmdargs:
+        format = True
+        cmdargs.remove('-')
+    if cmdargs: dbname = cmdargs.pop(0)
+    if cmdargs: table = cmdargs[0]
 
-        from loaddb import login
-        conn, curs = login(dbname)
-        dumpdb(curs, table, format)
+    from loaddb import login
+
+    conn, curs = login(dbname)
+    dumpdb(curs, table, format)
+
