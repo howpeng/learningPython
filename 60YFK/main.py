@@ -1,5 +1,11 @@
 #! -*-coding:utf-8-*-
-
+"""
+name: 60YFK
+version: 0.1 Beta
+create time: 08-18-2016
+author: How Peng
+email: howpeng@foxmail.com
+"""
 import sqlite3
 
 records = [(1, 'xujixing', 30),
@@ -28,17 +34,23 @@ def create_table(conn, curs):
 
 
 def add_record(records, curs):
+    """
+    将提前准备好的记录录入到数据表中。
+    :param records: 提前准备好的记录表
+    :param curs:
+    :return:
+    """
     #id = input("ID: ")
    # name = input("NAME: ")
    # age = input("AGE: ")
    # t = (id, name, age)
     for i in records:
-        curs.executemany('insert into test values (?,?,?)', i)
+        curs.execute('insert into test values (?,?,?)', i)
    # print('ADD ==>\n\tID: %s\n\tNAME: %s\n\tAGE: %s' % (id, name, age))
 
 
-def show_records(conn, curs):
-    curs.execute('select * from test')
+def show_records(curs):
+    curs.execute('select * from test where id = 1') # 待修改成可选择显示内容
     for i in curs.fetchall():
         print(i)
 
@@ -52,9 +64,9 @@ def main():
         if i == 'c':
             create_table(conn, curs)
         elif i == 'a':
-            add_record(conn, curs)
+            add_record(records, curs)
         elif i == 's':
-            show_records(conn, curs)
+            show_records(curs)
         elif i == 'e':
             return False
     conn.commit()
