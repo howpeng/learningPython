@@ -31,14 +31,25 @@ def register():
             db[username] = get_md5(password)
             print("OK! 新用户[%s]注册成功" % username)
         elif password_1 != password_2:
-            print("两次密码不一致,请重新输入!")
+            print("ERROR! 两次密码不一致,请重新输入!")
             register()
     elif username in db.keys():
-        print("用户已存在,请重新输入!")
+        print("ERROR! 用户已存在,请重新输入!")
         register()
 
-def login(username, password):
-    pass
+def login():
+    username = input("登录账号:　")
+    if username in db.keys():
+        password = getpass.getpass("登录密码:　")
+        if db[username] == get_md5(password):
+            print("OK! 管理员[%s]登录成功" % username)
+        elif db[username] != get_md5(password):
+            print("ERROR! 密码错误")
+            login()
+    elif username not in db.keys():
+        print("ERROR! 账号不存在")
+        register()
+
 
 def show_all():
     pass
@@ -123,7 +134,6 @@ def main():
     curs.close()
 
 if __name__ == '__main__':
-    for i in range(1,4):
-        register()
-        print(list(db.keys()))
+    register()
+    login()
 
