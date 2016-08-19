@@ -7,6 +7,53 @@ author: How Peng
 email: howpeng@foxmail.com
 """
 import sqlite3
+import hashlib
+import getpass
+
+#############################
+#    登录　　　开始
+#############################
+db = {}
+
+def get_md5(password):
+    md5 = hashlib.md5()
+    md5.update(password.encode('utf-8'))
+    pass_md5 = md5.hexdigest()
+    return pass_md5
+
+def register():
+    username = input("输入用户名:　")
+    if username not in db.keys():
+        password_1 = getpass.getpass("输入密码:　")
+        password_2 = getpass.getpass("确认密码:　")
+        if password_1 == password_2:
+            password = password_2
+            db[username] = get_md5(password)
+            print("OK! 新用户[%s]注册成功" % username)
+        elif password_1 != password_2:
+            print("两次密码不一致,请重新输入!")
+            register()
+    elif username in db.keys():
+        print("用户已存在,请重新输入!")
+        register()
+
+def login(username, password):
+    pass
+
+def show_all():
+    pass
+
+
+
+#############################
+#    登录　　　结束
+#############################
+
+
+
+#############################
+#    数据库操作　　　开始
+#############################
 
 records = [(1, 'xujixing', 30),
            (2, 'dangxiangguo', 24),
@@ -56,6 +103,10 @@ def show_records(curs):
 def updata_records():
     pass
 
+#############################
+#    数据库操作　　　结束
+#############################
+
 def main():
     conn, curs = connect_database()
     while True:
@@ -72,4 +123,7 @@ def main():
     curs.close()
 
 if __name__ == '__main__':
-    main()
+    for i in range(1,4):
+        register()
+        print(list(db.keys()))
+
