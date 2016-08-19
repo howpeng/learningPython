@@ -27,8 +27,6 @@ def connect_database():
 
 def create_table(conn, curs):
     curs.execute('create table test (ID int, NAME char, AGE int)')
-    conn.commit()
-    curs.close()
     print(Prompt.tips['create_table'])
 
 
@@ -36,6 +34,7 @@ def create_table(conn, curs):
 def add_record(records, curs):
     """
     将提前准备好的记录录入到数据表中。
+    下步考虑怎么将excel表中的数据导进来!!!!!
     :param records: 提前准备好的记录表
     :param curs:
     :return:
