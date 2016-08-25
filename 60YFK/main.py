@@ -9,11 +9,20 @@ email: howpeng@foxmail.com
 import sqlite3
 import hashlib
 import getpass
-
+import shelve
+import time
 #############################
 #    登录　　　开始
 #############################
-db = {}
+
+
+def save_info(username, password):
+    """保存用户账号信息,用shelve存储"""
+    with shelve.open('users_info') as users_db:
+        users_db[username] = password
+        for i in users_db.keys():
+            print(i + ':' + users_db[i])
+
 
 def get_md5(password):
     md5 = hashlib.md5()
@@ -21,34 +30,36 @@ def get_md5(password):
     pass_md5 = md5.hexdigest()
     return pass_md5
 
-def register():
+def register():                                         # !!!有ＢＵＧ!!!!!!!!!!!
     username = input("输入用户名:　")
-    if username not in db.keys():
-        password_1 = getpass.getpass("输入密码:　")
-        password_2 = getpass.getpass("确认密码:　")
-        if password_1 == password_2:
-            password = password_2
-            db[username] = get_md5(password)
-            print("OK! 新用户[%s]注册成功" % username)
-        elif password_1 != password_2:
-            print("ERROR! 两次密码不一致,请重新输入!")
+    with shelve.open('users_db') as users_info:
+        if username not in users_info.keys():
+            password_1 = getpass.getpass("输入密码:　")
+            password_2 = getpass.getpass("确认密码:　")
+            if password_1 == password_2:
+                password = get_md5(password_2)
+                save_info(username, password)
+                print("OK! 新用户[%s]注册成功" % username)
+            elif password_1 != password_2:
+                print("ERROR! 两次密码不一致,请重新输入!")
+                register()
+        elif username in users_info.keys():
+            print("ERROR! 用户已存在,请重新输入!")
             register()
-    elif username in db.keys():
-        print("ERROR! 用户已存在,请重新输入!")
-        register()
 
 def login():
     username = input("登录账号:　")
-    if username in db.keys():
-        password = getpass.getpass("登录密码:　")
-        if db[username] == get_md5(password):
-            print("OK! 管理员[%s]登录成功" % username)
-        elif db[username] != get_md5(password):
-            print("ERROR! 密码错误")
-            login()
-    elif username not in db.keys():
-        print("ERROR! 账号不存在")
-        register()
+    with shelve.open('users_db') as users_info:
+        if username in users_info.keys():
+            password = getpass.getpass("登录密码:　")
+            if users_info[username] == get_md5(password):
+                print("OK! 管理员[%s]登录成功" % username)
+            elif users_info[username] != get_md5(password):
+                print("ERROR! 密码错误")
+                login()
+        elif username not in users_info.keys():
+            print("ERROR! 账号不存在")
+            register()
 
 
 def show_all():
@@ -66,10 +77,6 @@ def show_all():
 #    数据库操作　　　开始
 #############################
 
-records = [(1, 'xujixing', 30),
-           (2, 'dangxiangguo', 24),
-           (3, 'shijiujian', 30),
-           (4, 'qixiang', 30)]
 
 class Prompt(object):
     tips = {'connect_database': 'OK! 连接数据库 test.db',
@@ -84,34 +91,34 @@ def connect_database():
 
 
 def create_table(conn, curs):
-    curs.execute('create table test (ID int, NAME char, AGE int)')
+    curs.execute('create table cangku (编号 int primary key, 品名 char, 数量 int,时间 char)')
     print(Prompt.tips['create_table'])
+    conn.commit()
+    curs.close()
 
 
 
-def add_record(records, curs):
+def add_record(conn, curs):
     """
     将提前准备好的记录录入到数据表中。
     下步考虑怎么将excel表中的数据导进来!!!!!
-    :param records: 提前准备好的记录表
-    :param curs:
-    :return:
     """
-    #id = input("ID: ")
-   # name = input("NAME: ")
-   # age = input("AGE: ")
-   # t = (id, name, age)
-    for i in records:
-        curs.execute('insert into test values (?,?,?)', i)
-   # print('ADD ==>\n\tID: %s\n\tNAME: %s\n\tAGE: %s' % (id, name, age))
+    conn, curs = connect_database()
+    curs.execute("insert into cangku values (001, '水龙头', 100, '2016-08-23')")
+    curs.execute("insert into cangku values (002, '三通', 100, '2016-08-23')")
+    curs.execute("insert into cangku values (003, '活接', 100, '2016-08-23')")
+    curs.execute("insert into cangku values (004, '阀门', 100, '2016-08-23')")
+    conn.commit()
+    curs.close()
 
 
 def show_records(curs):
-    curs.execute('select * from test where id = 1') # 待修改成可选择显示内容
+    curs.execute('select * from cangku') # 待修改成可选择显示内容
     for i in curs.fetchall():
         print(i)
 
-def updata_records():
+def updata_records(conn, curs):
+
     pass
 
 #############################
@@ -125,7 +132,7 @@ def main():
         if i == 'c':
             create_table(conn, curs)
         elif i == 'a':
-            add_record(records, curs)
+            add_record(conn, curs)
         elif i == 's':
             show_records(curs)
         elif i == 'e':
@@ -134,6 +141,5 @@ def main():
     curs.close()
 
 if __name__ == '__main__':
-    register()
-    login()
+    main()
 
