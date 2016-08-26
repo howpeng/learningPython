@@ -11,6 +11,8 @@ import hashlib
 import getpass
 import shelve
 import time
+
+L = []
 #############################
 #    登录　　　开始
 #############################
@@ -77,26 +79,17 @@ def show_all():
 #    数据库操作　　　开始
 #############################
 
-
-class Prompt(object):
-    tips = {'connect_database': 'OK! 连接数据库 test.db',
-            'create_table': 'OK! 创建数据表 test'}
-
-
 def connect_database():
     conn = sqlite3.connect('test.db')
     curs = conn.cursor()
-    print(Prompt.tips['connect_database'])
     return conn, curs
 
 
 def create_table(conn, curs):
-    curs.execute('create table cangku (编号 int primary key, 品名 char, 数量 int,时间 char)')
-    print(Prompt.tips['create_table'])
+    curs.execute("""create table cangku (ID int, NAME char, NUM int, TIME char)""")
+    curs.execute("""create table fendui (TEAM char, NAME char, NUM int, TIME char)""")
     conn.commit()
     curs.close()
-
-
 
 def add_record(conn, curs):
     """
@@ -104,22 +97,63 @@ def add_record(conn, curs):
     下步考虑怎么将excel表中的数据导进来!!!!!
     """
     conn, curs = connect_database()
-    curs.execute("insert into cangku values (001, '水龙头', 100, '2016-08-23')")
-    curs.execute("insert into cangku values (002, '三通', 100, '2016-08-23')")
-    curs.execute("insert into cangku values (003, '活接', 100, '2016-08-23')")
-    curs.execute("insert into cangku values (004, '阀门', 100, '2016-08-23')")
+    first = input("新货入库(n),还是旧货补充(a)")     # BUG! 补货记录没有体现
+    if first == 'n':
+        id = input("id: ")
+        name = input('name: ')
+        num = input('number: ')
+        query = 'insert into cangku values (?,?,?,?);'
+        curs.execute(query, (id, name, num, time.asctime()))
+        log(t='仓库', n=name, m=num, i=1)
+    elif first == 'a':
+        id = input("id: ")
+        num = int(input('number: '))
+        curs.execute("""select * from cangku where ID = ?""", (id,))
+        rr = curs.fetchone()
+        nn = rr[2]
+        sum = nn + num
+        curs.execute("""update cangku set NUM = ? where ID = ?""", (sum, id))
+        log(t='仓库', n=nn, m=num, i=1)
     conn.commit()
     curs.close()
 
 
-def show_records(curs):
-    curs.execute('select * from cangku') # 待修改成可选择显示内容
+def show_records(conn, curs):
+    conn, curs = connect_database()
+    i = input("[cangku] or [fendui]")
+    curs.execute("""select * from %s""" % i)  # 待修改成可选择显示内容
     for i in curs.fetchall():
         print(i)
+    conn.commit()
+    curs.close()
 
 def updata_records(conn, curs):
+    conn, curs = connect_database()
+    team = input("team: ")
+    id = input("id: ")
+    num = int(input("number: "))
+    curs.execute("""select * from cangku where ID = ?""", (id,))
+    record = curs.fetchone()
+    n = record[2]
+    name = record[1]
+    sum = n - num
+    curs.execute("""update cangku set NUM = ?, TIME = ? where ID = ?""", (sum, time.asctime(), id))
+    curs.execute("""insert into fendui values (?,?,?,?)""", (team, name, num, time.asctime()))
+    log(team, name, num)
+    conn.commit()
+    curs.close()
 
+
+
+def delete_records():
+    """删除记录,用字典"""
     pass
+
+def log(t, n, m, i=0):
+    ac = ['领取', '入库']
+    query = "[%s]  %s %s [%s] %s个" % (time.asctime(), t, ac[i], n, m)
+    L.append(query)
+    print(query)
 
 #############################
 #    数据库操作　　　结束
@@ -127,14 +161,19 @@ def updata_records(conn, curs):
 
 def main():
     conn, curs = connect_database()
+    print("OK! 成功连接数据库")
     while True:
-        i = input("可用命令: (a)添加记录,　(s)显示记录,　(e)退出程序\n请输入指令: ")
+        i = input("可用命令: (a)仓库补货,(u)出库操作,(s)显示记录,(e)退出程序\n请输入指令: ")
         if i == 'c':
             create_table(conn, curs)
         elif i == 'a':
             add_record(conn, curs)
         elif i == 's':
-            show_records(curs)
+            show_records(conn, curs)
+        elif i == 'u':
+            updata_records(conn, curs)
+        elif i == 'l':
+            print(L)
         elif i == 'e':
             return False
     conn.commit()
