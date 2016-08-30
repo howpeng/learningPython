@@ -32,7 +32,6 @@ def get_md5(password):
     pass_md5 = md5.hexdigest()
     return pass_md5
 
-
 def register():
     username = input("输入用户名:　")
     with shelve.open('users_db') as users_info:
@@ -51,7 +50,6 @@ def register():
         elif username in users_info.keys():
             print("ERROR! 用户已存在,请重新输入!")
             register()
-
 
 def login():
     n = 0
@@ -76,7 +74,6 @@ def login():
             n += 1
             continue
         users_info.close()
-
 
 def show_all():
     pass
@@ -132,19 +129,14 @@ def add_record(conn, curs):
     curs.close()
 
 
-def look_for_records(conn, curs):
+def show_records(conn, curs):
     conn, curs = connect_database()
     i = input("[cangku] or [fendui]")
     curs.execute("""select * from %s""" % i)  # 待修改成可选择显示内容
     for i in curs.fetchall():
-        show_record(i)
+        print(i)
     conn.commit()
     curs.close()
-
-def show_record(i):
-    print("序号:%s　|　品名:%s%s|　数量:%s%s　|　更新时间:%s\n%s" % (i[0], i[1], ' ' * (10 - len(i[1])), i[2], ' ' * (5 - len(str(i[2]))), i[3], '-' * 78))
-
-
 
 def updata_records(conn, curs):
     conn, curs = connect_database()
@@ -163,28 +155,17 @@ def updata_records(conn, curs):
     curs.close()
 
 
+
 def delete_records():
     """删除记录,用字典"""
     pass
 
 def log(t, n, m, i=0):
-    """内容不全!!!!!!!!!!"""
     ac = ['领取', '入库']
     query = "[%s]  %s %s [%s] %s个" % (time.asctime(), t, ac[i], n, m)
     L.append(query)
     print(query)
 
-def ck_m():
-    """仓库管理操作:1)显示库存,标注出缺货物品　2)物资入库　3)生成物资补充计划"""
-    pass
-
-def out_m():
-    """出库管理,将出库详细信息记录到log中。"""
-    pass
-
-def look_for():
-    """查询管理。1)可查询单位,物品指定时间内的用量
-    　　　　　　　2)生成统计报表"""
 #############################
 #    数据库操作　　　结束
 #############################
@@ -193,23 +174,22 @@ def main():
     conn, curs = connect_database()
     print("OK! 成功连接数据库")
     while True:
-        i = input("""可用命令: \n\t(1)库存管理\n\t(2)出库操作\n\t(3)查询记录\n\t(e)退出程序\n请输入指令: """)
+        i = input("可用命令: (a)仓库补货,(u)出库操作,(s)显示记录,(e)退出程序\n请输入指令: ")
         if i == 'c':
             create_table(conn, curs)
         elif i == 'a':
             add_record(conn, curs)
-        elif i == '3':
-            look_for_records(conn, curs)
+        elif i == 's':
+            show_records(conn, curs)
         elif i == 'u':
             updata_records(conn, curs)
         elif i == 'l':
             print(L)
-        elif i == 'e':    # 此处有BUG!!!　有显示完后再用退出时会显示输入密码操作
+        elif i == 'e':
             return False
     conn.commit()
     curs.close()
 
 if __name__ == '__main__':
     login()
-
 
