@@ -12,9 +12,9 @@ import getpass
 import shelve
 import time
 
-L = []
 #############################
 #    登录　　　开始
+#    保存用户信息的数据库为　user_db
 #############################
 
 
@@ -45,6 +45,7 @@ def register():
                     save_info(username, password)
                     print("OK! 新用户[%s]注册成功" % username)
                     login()
+                    return False
                 elif password_1 != password_2:
                     print("ERROR! 两次密码不一致,请重新输入!")
                     continue
@@ -54,28 +55,20 @@ def register():
 
 
 def login():
-    n = 0
-    while n < 3:
-        username = input("登录账号:　")
-        users_info = shelve.open('users_db')
-        if username == 'r':
-            register()
-        if username in users_info.keys() and username != 'r':
-            i = 0
-            while i < 3:
-                password = getpass.getpass("登录密码:　")
-                if users_info[username] == get_md5(password):
-                    print("OK! 管理员[%s]登录成功" % username)
-                    main()
-                elif users_info[username] != get_md5(password):
-                    print("ERROR! 密码错误")
-                    i += 1
-                    continue
-        elif username not in users_info and username != 'r':
-            print("ERROR! 用户不存在,请重新输入!")
-            n += 1
-            continue
-        users_info.close()
+    username = input("登录账号:　")
+    users_info = shelve.open('users_db')
+    if username == 'r':
+        register()
+    elif username in users_info.keys() and username != 'r':
+        password = getpass.getpass("登录密码:　")
+        if users_info[username] == get_md5(password):
+            print("OK! 管理员[%s]登录成功" % username)
+            main()
+        elif users_info[username] != get_md5(password):
+            print("ERROR! 密码错误")
+    elif username not in users_info and username != 'r':
+        print("ERROR! 用户不存在,请重新输入!")
+    users_info.close()
 
 
 def show_all():
@@ -169,10 +162,11 @@ def delete_records():
 
 def log(t, n, m, i=0):
     """内容不全!!!!!!!!!!"""
-    ac = ['领取', '入库']
-    query = "[%s]  %s %s [%s] %s个" % (time.asctime(), t, ac[i], n, m)
-    L.append(query)
-    print(query)
+    with open('log_file') as log_file:
+        ac = ['领取', '入库']
+        query = "[%s]  %s %s [%s] %s个\n" % (time.asctime(), t, ac[i], n, m)
+        log_file.write(query)
+        print(query)
 
 def ck_m():
     """仓库管理操作:1)显示库存,标注出缺货物品　2)物资入库　3)生成物资补充计划"""
@@ -182,19 +176,23 @@ def out_m():
     """出库管理,将出库详细信息记录到log中。"""
     pass
 
-def look_for():
+def look_for(conn, curs):
     """查询管理。1)可查询单位,物品指定时间内的用量
     　　　　　　　2)生成统计报表"""
+    print("thi is a test")
+    print(type(CMDs.values()))
 #############################
 #    数据库操作　　　结束
 #############################
+CMDs = {'1': ck_m, '2': out_m, '3': look_for}
 
 def main():
     conn, curs = connect_database()
     print("OK! 成功连接数据库")
     while True:
         i = input("""可用命令: \n\t(1)库存管理\n\t(2)出库操作\n\t(3)查询记录\n\t(e)退出程序\n请输入指令: """)
-        if i == 'c':
+        CMDs[i](conn, curs)
+    """ if i == 'c':
             create_table(conn, curs)
         elif i == 'a':
             add_record(conn, curs)
@@ -203,13 +201,13 @@ def main():
         elif i == 'u':
             updata_records(conn, curs)
         elif i == 'l':
-            print(L)
-        elif i == 'e':    # 此处有BUG!!!　有显示完后再用退出时会显示输入密码操作
-            return False
+            pass
+        elif i == 'e':
+            return False"""
     conn.commit()
     curs.close()
 
 if __name__ == '__main__':
-    login()
+    main()
 
 
