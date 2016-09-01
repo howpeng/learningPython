@@ -11,6 +11,7 @@ import hashlib
 import getpass
 import shelve
 import time
+import sys
 
 #############################
 #    登录　　　开始
@@ -170,41 +171,59 @@ def log(t, n, m, i=0):
 
 def ck_m():
     """仓库管理操作:1)显示库存,标注出缺货物品　2)物资入库　3)生成物资补充计划"""
-    pass
+    cmd('ck')
 
 def out_m():
     """出库管理,将出库详细信息记录到log中。"""
-    pass
+    cmd('out')
 
 def look_for():
     """查询管理。1)可查询单位,物品指定时间内的用量
     　　　　　　　2)生成统计报表"""
+    cmd('look_for')
     print("thi is a test")
-    print(type(CMDs.values()))
+
+
+def create_excel():
+    """生成补充计划表"""
+    pass
+
+def go_back():
+    """返回上一级菜单"""
+
 #############################
 #    数据库操作　　　结束
 #############################
 
-CMDs = {'1': ck_m, '2': out_m, '3': look_for}
+
+def cmd(n):
+    cmds = {'main': {'1': ck_m, '2': out_m, '3': look_for},
+            'ck': {'1': show_all, '2': add_record, '3': create_excel, '4': go_back},
+            'out': {},
+            'look_for': {}}
+    prompt = {'main': """可用命令: \n\t(1)库存管理\n\t(2)出库操作\n\t(3)查询记录\n\t(4)返回上级菜单\n\t(e)退出程序\n请输入指令: """,
+              #仓库管理
+                'ck': """\n####　库存管理　####\n可用命令: \n\t(1)显示库存量\n\t(2)物资入库\n\t(3)生成补充计划\n\t(4)返回上级菜单\n\t(e)退出程序\n请输入指令: """,
+              #出库操作
+                'out': """\n####　出库操作　####\n可用命令: \n\t(1)请领消耗\n\t(2)临时借出\n\t(3)返回上级菜单\n\t(e)退出程序\n请输入指令: """,
+              # 查询记录
+              'look_for': """\n####　查询记录　####\n可用命令: \n\t(1)请领记录\n\t(2)临时借出记录\n\t(3)返回上级菜单\n\t(e)退出程序\n请输入指令: """
+              }
+
+    while True:
+        i = input(prompt[n])
+        if i in '12345':
+            cmds[n][i]()
+        elif i == 'e':
+            sys.exit()
+        else:
+            return False
+
 
 def main():
     conn, curs = connect_database()
     print("OK! 成功连接数据库")
-    while True:
-        i = input("""可用命令: \n\t(1)库存管理\n\t(2)出库操作\n\t(3)查询记录\n\t(e)退出程序\n请输入指令: """)
-        CMDs[i]()
-    """ if i == 'c':
-            create_table(conn, curs)
-        elif i == 'a':
-            add_record(conn, curs)
-        elif i == '3':
-            look_for_records(conn, curs)
-        elif i == 'u':
-            updata_records(conn, curs)
-        elif i == 'l':
-            pass
-        elif i == 'e':
-            return False"""
+    cmd('main')
     conn.commit()
     curs.close()
 
