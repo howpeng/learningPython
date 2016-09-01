@@ -98,7 +98,7 @@ def create_table(conn, curs):
     conn.commit()
     curs.close()
 
-def add_record(conn, curs):
+def add_record():
     """
     将提前准备好的记录录入到数据表中。
     下步考虑怎么将excel表中的数据导进来!!!!!
@@ -125,7 +125,7 @@ def add_record(conn, curs):
     curs.close()
 
 
-def look_for_records(conn, curs):
+def look_for_records():
     conn, curs = connect_database()
     i = input("[cangku] or [fendui]")
     curs.execute("""select * from %s""" % i)  # 待修改成可选择显示内容
@@ -139,7 +139,7 @@ def show_record(i):
 
 
 
-def updata_records(conn, curs):
+def updata_records():
     conn, curs = connect_database()
     team = input("team: ")
     id = input("id: ")
@@ -176,7 +176,7 @@ def out_m():
     """出库管理,将出库详细信息记录到log中。"""
     pass
 
-def look_for(conn, curs):
+def look_for():
     """查询管理。1)可查询单位,物品指定时间内的用量
     　　　　　　　2)生成统计报表"""
     print("thi is a test")
@@ -184,6 +184,7 @@ def look_for(conn, curs):
 #############################
 #    数据库操作　　　结束
 #############################
+
 CMDs = {'1': ck_m, '2': out_m, '3': look_for}
 
 def main():
@@ -191,7 +192,7 @@ def main():
     print("OK! 成功连接数据库")
     while True:
         i = input("""可用命令: \n\t(1)库存管理\n\t(2)出库操作\n\t(3)查询记录\n\t(e)退出程序\n请输入指令: """)
-        CMDs[i](conn, curs)
+        CMDs[i]()
     """ if i == 'c':
             create_table(conn, curs)
         elif i == 'a':
