@@ -94,10 +94,38 @@ def connect_database():
 
 
 def create_table(conn, curs):
-    curs.execute("""create table cangku (ID int, NAME char, NUM int, TIME char)""")
-    curs.execute("""create table fendui (TEAM char, NAME char, NUM int, TIME char)""")
+    curs.execute("""create table if not exists records (ID char,
+                                          NAME char,
+                                          MODEL char,
+                                          NUM int,
+                                          FF char,
+                                          TT char,
+                                          BEHAVE char,
+                                          TIME char)""")
     conn.commit()
     curs.close()
+
+def display_records(how=None, who=None):
+    """kc:库存　ql_dw:以单位区分请领物品　ql_wp:以物品区分请领 bo:借出去的东西"""
+    conn, curs = connect_database()
+    query = {'kc': """select NAME, MODEL, SUM(NUM), TIME from records group by NAME """,
+             'ql_dw': """select NAME, MODEL, SUM(NUM), TIME from records where BEHAVE = 'out' and TT = '%s' group by NAME """ % who,
+             'ql_wp': """select NAME, MODEL, SUM(NUM), TIME from records where BEHAVE = 'out' and NAME = '%s' group by TT order by TT """ % who,
+             'bo': """select NAME, MODEL, NUM, TIME from records where BEHAVE = 'borrow' order by TT """,
+             'bk': """select NAME, MODEL, NUM, TIME from records where BEHAVE = 'back' order by TT """
+             }
+    curs.execute(query[who])
+    for i in curs.fetchall():
+        show_record(i, who)
+    conn.commit()
+    curs.close()
+
+def show_record(i, n=None):
+    show = {'kc': "*** 品名:%s%s|　型号:%s%s  |  数量:%s%s　|　更新时间:%s\n%s" % (
+    i[0], ' ' * (8 - len(i[0])), i[1], ' ' * (5 - len(i[1])), i[2], ' ' * (5 - len(str(i[2]))), i[3], '-' * 82)}
+    print(show[n])
+
+
 
 def add_record():
     """
@@ -124,20 +152,6 @@ def add_record():
         log(t='仓库', n=nn, m=num, i=1)
     conn.commit()
     curs.close()
-
-
-def look_for_records(n):
-    conn, curs = connect_database()
-    curs.execute("""select * from %s""" % n)  # 待修改成可选择显示内容
-    for i in curs.fetchall():
-        show_record(i)
-    conn.commit()
-    curs.close()
-
-def show_record(i):
-    print("序号:%s　|　品名:%s%s|　数量:%s%s　|　更新时间:%s\n%s" % (i[0], i[1], ' ' * (10 - len(i[1])), i[2], ' ' * (5 - len(str(i[2]))), i[3], '-' * 78))
-
-
 
 def updata_records():
     conn, curs = connect_database()
@@ -223,12 +237,18 @@ def cmd(n):
 
 def main():
     conn, curs = connect_database()
+    #create_table(conn, curs)
     print("OK! 成功连接数据库")
-    cmd('main')
+    #cmd('main')
+    curs.execute("""insert into records values ('01', 'test', '50w', 100, 'store', 'cangku', 'in', '%s')""" % time.asctime())
+    curs.execute(
+        """insert into records values ('01', 'test', '50w', 200, 'store', 'cangku', 'in', '%s')""" % time.asctime())
+    curs.execute(
+        """insert into records values ('01', 'test', '50w', 122, 'store', 'cangku', 'in', '%s')""" % time.asctime())
     conn.commit()
     curs.close()
 
 if __name__ == '__main__':
     main()
-
+    display_records(who='kc')
 
