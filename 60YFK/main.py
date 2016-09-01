@@ -126,10 +126,9 @@ def add_record():
     curs.close()
 
 
-def look_for_records():
+def look_for_records(n):
     conn, curs = connect_database()
-    i = input("[cangku] or [fendui]")
-    curs.execute("""select * from %s""" % i)  # 待修改成可选择显示内容
+    curs.execute("""select * from %s""" % n)  # 待修改成可选择显示内容
     for i in curs.fetchall():
         show_record(i)
     conn.commit()
@@ -163,7 +162,7 @@ def delete_records():
 
 def log(t, n, m, i=0):
     """内容不全!!!!!!!!!!"""
-    with open('log_file') as log_file:
+    with open('log_file', 'a') as log_file:
         ac = ['领取', '入库']
         query = "[%s]  %s %s [%s] %s个\n" % (time.asctime(), t, ac[i], n, m)
         log_file.write(query)
@@ -190,7 +189,10 @@ def create_excel():
 
 def go_back():
     """返回上一级菜单"""
+    return False
 
+def backup():
+    """每次使用都进行备份"""
 #############################
 #    数据库操作　　　结束
 #############################
@@ -200,7 +202,7 @@ def cmd(n):
     cmds = {'main': {'1': ck_m, '2': out_m, '3': look_for},
             'ck': {'1': show_all, '2': add_record, '3': create_excel, '4': go_back},
             'out': {},
-            'look_for': {}}
+            'look_for': {'1': look_for_records('cangku')}}
     prompt = {'main': """可用命令: \n\t(1)库存管理\n\t(2)出库操作\n\t(3)查询记录\n\t(4)返回上级菜单\n\t(e)退出程序\n请输入指令: """,
               #仓库管理
                 'ck': """\n####　库存管理　####\n可用命令: \n\t(1)显示库存量\n\t(2)物资入库\n\t(3)生成补充计划\n\t(4)返回上级菜单\n\t(e)退出程序\n请输入指令: """,
@@ -209,10 +211,9 @@ def cmd(n):
               # 查询记录
               'look_for': """\n####　查询记录　####\n可用命令: \n\t(1)请领记录\n\t(2)临时借出记录\n\t(3)返回上级菜单\n\t(e)退出程序\n请输入指令: """
               }
-
     while True:
         i = input(prompt[n])
-        if i in '12345':
+        if i in '1234':
             cmds[n][i]()
         elif i == 'e':
             sys.exit()
