@@ -3,16 +3,40 @@ from bs4 import BeautifulSoup
 import requests
 import pymongo
 import time
+import re
 
 client = pymongo.MongoClient('localhost', 27017)
 wuhan = client['wuhan']
 ershoufang = wuhan['ershoufang']
 
-url = 'http://wh.lianjia.com/ershoufang/'
+r_url = 'http://wh.lianjia.com/ershoufang/'
 
-def get_more_pages(url,start, end):
+def get_areas(url):
+    '''得到地区的url列表和名称列表，放在后面作为参数使用'''
+    areas_names = []
+    r = requests.get(url)
+    r.encoding = 'utf-8'
+    soup = BeautifulSoup(r.text, 'lxml')
+    areas = soup.select('div.position > dl:nth-of-type(2) > dd > div:nth-of-type(1) > div > a')
+    for i in areas:
+        areas_names.append(i.attrs['href'].split('/')[2])
+    return areas_names
+
+
+def get_max_page_num(url):
+    '''返回一个地区的页面数量，从网页源码中找到了最大页面数字，留着后面用'''
+    r = requests.get(url)
+    r.encoding = 'utf-8'
+    soup = BeautifulSoup(r.text, 'lxml')
+    num = soup.find('div', {'class': 'page-box house-lst-page-box'})
+    str = num['page-data'].split(',')[0]
+    n = re.search('\d+', str)
+    return n.group()
+
+
+def get_more_pages(url, n):
     urls = []
-    for i in range(start, end+1):
+    for i in range(1, int(n)+1):
         u = url + 'pg' + str(i)
         urls.append(u)
     return urls
@@ -48,6 +72,9 @@ def get_info(url):
         ershoufang.insert_one(data)
 
 if __name__ == '__main__':
-    urls = get_more_pages(url, 1, 100)
-    for u in urls:
-        get_info(u)
+    areas = get_areas(r_url)
+    for a in areas:
+        urls = get_more_pages(url=r_url+a, n=get_max_page_num(r_url+a))
+        for u in urls:
+            get_info(u)
+
