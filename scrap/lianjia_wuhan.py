@@ -19,7 +19,7 @@ def get_areas(url):
     soup = BeautifulSoup(r.text, 'lxml')
     areas = soup.select('div.position > dl:nth-of-type(2) > dd > div:nth-of-type(1) > div > a')
     for i in areas:
-        areas_names.append(i.attrs['href'].split('/')[2])
+        areas_names.append(i.attrs['href'].split('/')[2]+'/')
     return areas_names
 
 
@@ -46,13 +46,11 @@ def get_info(url):
     r = requests.get(url)
     r.encoding = 'utf-8'
     soup = BeautifulSoup(r.text, 'lxml')
-    titles = soup.select('div.info.clear > div.title > a')
     infos = soup.select('div.info.clear > div.address > div')
     position_infos = soup.select('div.info.clear > div.flood > div')
     total_prices = soup.select('div.info.clear > div.priceInfo > div.totalPrice > span')
     unit_prices = soup.select('div.info.clear > div.priceInfo > div.unitPrice > span')
-    for t, i, p , t, u in zip(titles, infos, position_infos, total_prices, unit_prices):
-        title = t.get_text()
+    for i, p , t, u in zip(infos, position_infos, total_prices, unit_prices):
         info = i.get_text()
         position_info = p.get_text()
         floor = position_info.split()[0]
@@ -60,16 +58,28 @@ def get_info(url):
         address = position_info.split()[-1]
         total_price = t.get_text()
         unit_price = u.get_text()
+        info_split = info.split(' | ')
+        xiaoqu_name = info_split[0]
+        pattern = info_split[1]
+        area = info_split[2]
+        toward = info_split[3]
+        decorate = info_split[4]
+        elevator = info_split[-1]
         data = {
-             'title': title,
-             'info': info,
              'floor': floor,
              'build_date': formate,
              'address': address,
+             'xiaoqu': xiaoqu_name,
+             'pattern': pattern,
+             'area': area,
+             'toward': toward,
+             'decorate': decorate,
+             'elevator': elevator,
              'total_price': total_price,
              'unit_price': unit_price
          }
         ershoufang.insert_one(data)
+
 
 if __name__ == '__main__':
     areas = get_areas(r_url)
