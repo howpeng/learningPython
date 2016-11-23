@@ -7,7 +7,7 @@ class Form(QWidget):
 
         self.cm()
         self.createHorizonGroupBox()
-        self.createGridGroupBox()
+        self.createGridGroupBox(b=1)
 
         mainLayout = QVBoxLayout()
         mainLayout.setMenuBar(self.menuBar)
@@ -33,55 +33,82 @@ class Form(QWidget):
         print('helo you are a DA SHA BI')
 
     def createHorizonGroupBox(self):
+
         self.horizonGroupBox = QGroupBox('功能')
         layout = QHBoxLayout()
-
         self.buttonIN = QPushButton('入库')
         self.buttonOUT = QPushButton('出库')
         self.buttonSEEK = QPushButton('查询')
+        self.buttonOTHER = QPushButton('其他')
         layout.addWidget(self.buttonIN)
         layout.addWidget(self.buttonOUT)
         layout.addWidget(self.buttonSEEK)
+        layout.addWidget(self.buttonOTHER)
 
         self.horizonGroupBox.setLayout(layout)
+
+        self.buttonIN.clicked.connect(self.createGridGroupBox(b=1))
+        self.buttonOUT.clicked.connect(self.createGridGroupBox(b=2))
+
 
     def show_state(self):
         text = self.in_num.text()
         self.state.setText(text)
 
-    def createGridGroupBox(self):
-        self.gridGroupBox = QGroupBox('数据录入')
-        layout = QFormLayout()
+    def createGridGroupBox(self, b):
+        if b == 1:
+            self.gridGroupBox = QGroupBox('入库操作')
+            layout = QFormLayout()
 
-        self.in_time = QLabel('时期：')
-        self.in_class = QComboBox(self)
-        self.in_name = QComboBox(self)
-        self.in_type = QComboBox(self)
-        self.in_num = QLineEdit()
+            self.in_time = QLabel('时期：')
+            self.in_class = QComboBox(self)
+            self.in_name = QComboBox(self)
+            self.in_type = QComboBox(self)
+            self.in_num = QLineEdit()
 
-        i_class = {'水料', '电料'}
-        in_dl = {'lingt', 'kjkj', 'jkjk'}
-        in_sl = {'211', '985'}
+            i_class = {'水料', '电料'}
+            in_dl = {'lingt', 'kjkj', 'jkjk'}
+            in_sl = {'211', '985'}
 
-        self.in_class.addItems(i_class)
+            self.in_class.addItems(i_class)
 
+            self.state = QTextBrowser()
+            layout.addRow(QLabel('时期：'), QLineEdit())
+            layout.addRow(QLabel('类别：'), self.in_class)
+            layout.addRow(QLabel('品名：'), self.in_name)
+            layout.addRow(QLabel('型号：'), self.in_type)
+            layout.addRow(QLabel('数量：'), self.in_num)
+            layout.addRow(self.state)
+            self.in_num.textChanged[str].connect(self.show_state)
 
+            self.gridGroupBox.setLayout(layout)
+        if b == 2:
+            self.gridGroupBox = QGroupBox('出库操作')
+            layout = QFormLayout()
+            self.out_company = QComboBox(self)
+            self.in_time = QLabel('时期：')
+            self.in_class = QComboBox(self)
+            self.in_name = QComboBox(self)
+            self.in_type = QComboBox(self)
+            self.in_num = QLineEdit()
 
-        self.state = QTextBrowser()
-        layout.addRow(QLabel('时期：'), QLineEdit())
-        layout.addRow(QLabel('类别：'), self.in_class)
-        layout.addRow(QLabel('品名：'), self.in_name)
-        layout.addRow(QLabel('型号：'), self.in_type)
-        layout.addRow(QLabel('数量：'), self.in_num)
-        layout.addRow(self.state)
-        self.in_num.textChanged[str].connect(self.show_state)
+            i_class = {'水料', '电料'}
+            in_dl = {'lingt', 'kjkj', 'jkjk'}
+            in_sl = {'211', '985'}
 
-        self.gridGroupBox.setLayout(layout)
+            self.in_class.addItems(i_class)
 
+            self.state = QTextBrowser()
+            layout.addRow(QLabel('单位: '), self.out_company)
+            layout.addRow(QLabel('时期：'), QLineEdit())
+            layout.addRow(QLabel('类别：'), self.in_class)
+            layout.addRow(QLabel('品名：'), self.in_name)
+            layout.addRow(QLabel('型号：'), self.in_type)
+            layout.addRow(QLabel('数量：'), self.in_num)
+            layout.addRow(self.state)
+            self.in_num.textChanged[str].connect(self.show_state)
 
-
-
-
+            self.gridGroupBox.setLayout(layout)
 
 
 if __name__ == '__main__':
