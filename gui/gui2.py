@@ -1,12 +1,9 @@
-import sys
-from tkinter import *
+# -*- coding: utf-8 -*-
 
-def haha():
-    a = Label(None, text='heiheihei')
+from PyQt5.QtWidgets import *
 
 
+class oneWindow(QDialog):
 
-
-widget = Button(None, text='exit the window', command=haha())
-widget.pack()
-widget.mainloop()
+    def __init__(self, parent=None):
+        super(oneWindow, self).__init__(parent)
