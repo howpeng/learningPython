@@ -147,7 +147,7 @@ class Form(QDialog):
         form = QDialog()
         form.setLayout(mainLayout)
         form.setWindowTitle('物资入库')
-        okButton.clicked.connect(self.pp)
+        okButton.clicked.connect(self.updateDataIn)
         cancelButton.clicked.connect(form.reject)
 
         self.inFrom.addItems(initialData.companyList)
@@ -165,31 +165,82 @@ class Form(QDialog):
             self.inName.clear()
             self.inName.addItems(initialData.kinds[i])
 
+    def diffNameOut(self):
+        '''当各类变化时,下面可选的品名也跟着变化'''
+        i = self.outKinds.currentText()
+        if self.outKinds.currentText() == i:
+            self.outName.clear()
+            self.outName.addItems(initialData.kinds[i])
 
     def pp(self):
         pass
 
     def outDataWindow(self):
-        self.outCompany = QComboBox()
+        self.outDate = QDateEdit()
+        self.outTo = QComboBox()
+        self.outKinds = QComboBox()
         self.outName = QComboBox()
+        self.outSize = QLineEdit()
         self.outNumber = QLineEdit()
+        self.outMemo = QLineEdit()
+        self.outShow = QListWidget()
+        date = QLabel('日期: ')
+        date.setBuddy(self.outDate)
+        outto = QLabel('去向: ')
+        outto.setBuddy(self.outTo)
+        kind = QLabel('类别: ')
+        kind.setBuddy(self.outKinds)
+        name = QLabel('品名: ')
+        name.setBuddy(self.outName)
+        outsize = QLabel('型号: ')
+        outsize.setBuddy(self.outSize)
+        number = QLabel('数量: ')
+        number.setBuddy(self.outNumber)
+        memo = QLabel('备注: ')
+        memo.setBuddy(self.outMemo)
         okButton = QPushButton('提交')
         cancelButton = QPushButton('取消')
-        self.outShow = QListWidget()
-        layout = QFormLayout()
-        layout.addRow(QLabel('单位: '), self.outCompany)
-        layout.addRow(QLabel('品名: '), self.outName)
-        layout.addRow(QLabel('数量: '), self.outNumber)
-        layout.addRow(okButton, cancelButton)
-        layout.addRow(self.outShow)
+
+        mainLayout = QVBoxLayout()
+
+        inputLayout = QGridLayout()
+        inputLayout.addWidget(date, 0, 0)
+        inputLayout.addWidget(self.outDate, 0, 1)
+        inputLayout.addWidget(outto, 1, 0)
+        inputLayout.addWidget(self.outTo, 1, 1)
+        inputLayout.addWidget(kind, 2, 0)
+        inputLayout.addWidget(self.outKinds, 2, 1)
+        inputLayout.addWidget(name, 3, 0)
+        inputLayout.addWidget(self.outName, 3, 1)
+        inputLayout.addWidget(outsize, 4, 0)
+        inputLayout.addWidget(self.outSize, 4, 1)
+        inputLayout.addWidget(number, 5, 0)
+        inputLayout.addWidget(self.outNumber, 5, 1)
+        inputLayout.addWidget(memo, 6, 0)
+        inputLayout.addWidget(self.outMemo, 6, 1)
+
+        inputBox = QGroupBox()
+        inputBox.setTitle('数据录入')
+        inputBox.setLayout(inputLayout)
+        buttonBox = QHBoxLayout()
+        buttonBox.addWidget(okButton)
+        buttonBox.addWidget(cancelButton)
+        mainLayout.addWidget(inputBox)
+        mainLayout.addLayout(buttonBox)
+        mainLayout.addWidget(self.outShow)
 
         form = QDialog()
-        form.setLayout(layout)
+        form.setLayout(mainLayout)
         form.setWindowTitle('物资出库')
-        # okButton.clicked.connect(????)
+        okButton.clicked.connect(self.pp)
         cancelButton.clicked.connect(form.reject)
-        if form.exec_():
-            return
+
+        self.outTo.addItems(initialData.companyList)
+        self.outKinds.addItems(initialData.kinds.keys())
+        self.outKinds.currentTextChanged.connect(self.diffNameOut)
+
+        if form.exec_():  # 这种情况下弹出的窗口不会在输入信息后立刻关闭
+            return  # 而是可以反复填数据
 
     def seekDataWindow(self):
         self.seekCompany = QComboBox()
@@ -281,6 +332,8 @@ class Form(QDialog):
         elif username in users_info.keys():
             password = self.password.text()
             if users_info[username] == self.get_md5(password):
+                conn, curs = self.connectDataBase()
+                self.createDataBase(conn, curs)
                 self.featureWindow()
             elif users_info[username] != self.get_md5(password):
                 QMessageBox.information(self, '密码错误', '密码错误,请重新输入!')
@@ -297,12 +350,32 @@ class Form(QDialog):
 
     def createDataBase(self, conn, curs):
         curs.execute("""create table if not exists records (
+                                              TIME char,
+                                              FF char,
+                                              TT char,
                                               NAME char,
+                                              SIZE char,
                                               NUM int,
-                                              TIME char)""")
+                                              USER char)""")
         conn.commit()
         curs.close()
 
+    def updateDataIn(self):
+        conn, curs = self.connectDataBase()
+        date = time.localtime()
+        inDate = str(date[0])+'年'+str(date[1])+'月'+str(date[2])+'日'
+        inFrom = self.inFrom.currentText()
+        inTo = '营房仓库'
+        inName = self.inName.currentText()
+        inSize = self.inSize.text()
+        inNumber = self.inNumber.text()
+        inUser = self.userName.text()
+        curs.execute("""insert into records values (?,?,?,?,?,?,?)""", (inDate, inFrom, inTo, inName, inSize, inNumber, inUser))
+        conn.commit()
+        curs.close()
+        string = "[OK!] {0}入库{1}{2}{3}个".format(inUser, inName, inSize, inNumber)
+        self.inShow.addItem(string)
+        QMessageBox.information(self, '录入成功', string)
 
 
 if __name__ == '__main__':
