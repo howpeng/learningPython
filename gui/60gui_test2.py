@@ -11,10 +11,11 @@ class Form(QDialog):
     #最先显示的登录界面
     def __init__(self, parent=None):
         super(Form, self).__init__(parent)
-        conn, curs = self.connectDataBase()
-        self.createDataBase(conn, curs)
+
+        self.initUI()
 
 
+    def initUI(self):
         self.userName = QLineEdit()
         self.password = QLineEdit()
         self.password.setEchoMode(QLineEdit.Password)
@@ -152,6 +153,8 @@ class Form(QDialog):
 
         self.inFrom.addItems(initialData.companyList)
         self.inKinds.addItems(initialData.kinds.keys())
+        nowKind = self.inKinds.currentText()
+        self.inName.addItems(initialData.kinds[nowKind])
         self.inKinds.currentTextChanged.connect(self.diffName)
 
         if form.exec_():  # 这种情况下弹出的窗口不会在输入信息后立刻关闭
@@ -232,11 +235,13 @@ class Form(QDialog):
         form = QDialog()
         form.setLayout(mainLayout)
         form.setWindowTitle('物资出库')
-        okButton.clicked.connect(self.pp)
+        okButton.clicked.connect(self.updateDataOut)
         cancelButton.clicked.connect(form.reject)
 
         self.outTo.addItems(initialData.companyList)
         self.outKinds.addItems(initialData.kinds.keys())
+        nowKind = self.outKinds.currentText()
+        self.outName.addItems(initialData.kinds[nowKind])
         self.outKinds.currentTextChanged.connect(self.diffNameOut)
 
         if form.exec_():  # 这种情况下弹出的窗口不会在输入信息后立刻关闭
@@ -256,7 +261,10 @@ class Form(QDialog):
 
         okButton = QPushButton('提交')
         cancelButton = QPushButton('取消')
-        self.outShow = QListWidget()
+        self.seekShow = QListWidget()
+
+        inputBox = QGroupBox()
+        inputBox.setTitle('查询条件')
         layout = QGridLayout()
         layout.addWidget(self.checkDate, 0, 0)
         layout.addWidget(self.seekDate, 0, 1)
@@ -266,16 +274,29 @@ class Form(QDialog):
         layout.addWidget(self.seekName, 2, 1)
         layout.addWidget(okButton, 3, 0)
         layout.addWidget(cancelButton, 3, 1)
-        layout.addWidget(self.outShow, 4, 0, 1, 2)
+
+        inputBox.setLayout(layout)
+        buttonBox = QHBoxLayout()
+        buttonBox.addWidget(okButton)
+        buttonBox.addWidget(cancelButton)
+
+        mainLayout = QVBoxLayout()
+        mainLayout.addWidget(inputBox)
+        mainLayout.addLayout(buttonBox)
+        mainLayout.addWidget(self.seekShow)
+
+        self.seekCompany.addItems(initialData.companyList)
+        for i in initialData.kinds.keys():
+            self.seekName.addItems(initialData.kinds[i])
 
         form = QDialog()
-        form.setLayout(layout)
+        form.setLayout(mainLayout)
         form.setWindowTitle('记录查询')
         self.checkDate.toggled.connect(self.seekDate.setEnabled)
         self.checkCompany.toggled.connect(self.seekCompany.setEnabled)
         self.checkName.toggled.connect(self.seekName.setEnabled)
 
-        # okButton.clicked.connect(????)
+        okButton.clicked.connect(self.seekData)
         cancelButton.clicked.connect(form.reject)
 
         if form.exec_():
@@ -370,12 +391,56 @@ class Form(QDialog):
         inSize = self.inSize.text()
         inNumber = self.inNumber.text()
         inUser = self.userName.text()
-        curs.execute("""insert into records values (?,?,?,?,?,?,?)""", (inDate, inFrom, inTo, inName, inSize, inNumber, inUser))
-        conn.commit()
-        curs.close()
-        string = "[OK!] {0}入库{1}{2}{3}个".format(inUser, inName, inSize, inNumber)
-        self.inShow.addItem(string)
-        QMessageBox.information(self, '录入成功', string)
+        try:
+            if inName != '' and inNumber != '':
+                reply = QMessageBox.question(self, '请确认', '是否入库{}{}{}个?'.format(inName, inSize, inNumber), QMessageBox.Yes|QMessageBox.No)
+                if reply == QMessageBox.Yes:
+                    curs.execute("""insert into records values (?,?,?,?,?,?,?)""", (inDate, inFrom, inTo, inName, inSize, int(inNumber), inUser))
+                    conn.commit()
+                    curs.close()
+                    string = "[OK!] {0}入库{1}{2}{3}个".format(inUser, inName, inSize, inNumber)
+                    self.inShow.addItem(string)
+                else:
+                    return
+            elif inName == '' or inNumber == '':
+                QMessageBox.information(self, 'error', '输入信息不全!')
+        except:
+            QMessageBox.information(self, 'error', '输入信息有误, 请重新输入!')
+        finally:
+            curs.close()
+
+    def updateDataOut(self):
+        conn, curs = self.connectDataBase()
+        date = time.localtime()
+        outDate = str(date[0]) + '年' + str(date[1]) + '月' + str(date[2]) + '日'
+        outTo = self.outTo.currentText()
+        outFrom = '营房仓库'
+        outName = self.outName.currentText()
+        outSize = self.outSize.text()
+        outNumber = self.outNumber.text()
+        outUser = self.userName.text()
+        try:
+            if outName != '' and outNumber != '':
+                reply = QMessageBox.question(self, '请确认', '是否出库库 {}{}{}个?'.format(outName, outSize, outNumber),
+                                             QMessageBox.Yes | QMessageBox.No)
+                if reply == QMessageBox.Yes:
+                    curs.execute("""insert into records values (?,?,?,?,?,?,?)""",
+                                 (outDate, outFrom, outTo, outName, outSize, -int(outNumber), outUser))
+                    conn.commit()
+                    curs.close()
+                    string = "[OK!] {0}出库{1}{2}{3}个".format(outUser, outName, outSize, outNumber)
+                    self.outShow.addItem(string)
+                else:
+                    return
+            elif outName == '' or outNumber == '':
+                QMessageBox.information(self, 'error', '输入信息不全!')
+        except:
+            QMessageBox.information(self, 'error', '输入信息有误, 请重新输入!')
+        finally:
+            curs.close()
+
+    def seekData(self):
+        conn, curs = self.connectDataBase()
 
 
 if __name__ == '__main__':
