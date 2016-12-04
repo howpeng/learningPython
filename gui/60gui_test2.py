@@ -90,8 +90,10 @@ class Form(QDialog):
             return
 
     def inDataWindow(self):
-        self.inDate = QDateEdit()
-        self.inFrom = QComboBox()
+        date = time.gmtime()
+        inDate = "{}/{}/{}".format(date.tm_year, date.tm_mon, date.tm_mday)
+        self.inDate = QLineEdit(inDate)
+        self.inCompany = QComboBox()
         self.inKinds = QComboBox()
         self.inName = QComboBox()
         self.inSize = QLineEdit()
@@ -100,8 +102,8 @@ class Form(QDialog):
         self.inShow = QListWidget()
         date = QLabel('日期: ')
         date.setBuddy(self.inDate)
-        infrom = QLabel('来源: ')
-        infrom.setBuddy(self.inFrom)
+        inCompany = QLabel('来源: ')
+        inCompany.setBuddy(self.inCompany)
         kind = QLabel('类别: ')
         kind.setBuddy(self.inKinds)
         name = QLabel('品名: ')
@@ -120,8 +122,8 @@ class Form(QDialog):
         inputLayout = QGridLayout()
         inputLayout.addWidget(date, 0, 0)
         inputLayout.addWidget(self.inDate, 0, 1)
-        inputLayout.addWidget(infrom, 1, 0)
-        inputLayout.addWidget(self.inFrom, 1, 1)
+        inputLayout.addWidget(inCompany, 1, 0)
+        inputLayout.addWidget(self.inCompany, 1, 1)
         inputLayout.addWidget(kind, 2, 0)
         inputLayout.addWidget(self.inKinds, 2, 1)
         inputLayout.addWidget(name, 3, 0)
@@ -151,7 +153,7 @@ class Form(QDialog):
         okButton.clicked.connect(self.updateDataIn)
         cancelButton.clicked.connect(form.reject)
 
-        self.inFrom.addItems(initialData.companyList)
+        self.inCompany.addItems(initialData.companyList)
         self.inKinds.addItems(initialData.kinds.keys())
         nowKind = self.inKinds.currentText()
         self.inName.addItems(initialData.kinds[nowKind])
@@ -160,37 +162,21 @@ class Form(QDialog):
         if form.exec_():  # 这种情况下弹出的窗口不会在输入信息后立刻关闭
             return  # 而是可以反复填数据
 
-
-    def diffName(self):
-        '''当各类变化时,下面可选的品名也跟着变化'''
-        i = self.inKinds.currentText()
-        if self.inKinds.currentText() == i:
-            self.inName.clear()
-            self.inName.addItems(initialData.kinds[i])
-
-    def diffNameOut(self):
-        '''当各类变化时,下面可选的品名也跟着变化'''
-        i = self.outKinds.currentText()
-        if self.outKinds.currentText() == i:
-            self.outName.clear()
-            self.outName.addItems(initialData.kinds[i])
-
-    def pp(self):
-        pass
-
     def outDataWindow(self):
-        self.outDate = QDateEdit()
-        self.outTo = QComboBox()
+        date = time.gmtime()
+        outDate = "{}/{}/{}".format(date.tm_year, date.tm_mon, date.tm_mday)
+        self.outDate = QLineEdit(outDate)
+        self.outCompany = QComboBox()
         self.outKinds = QComboBox()
         self.outName = QComboBox()
         self.outSize = QLineEdit()
         self.outNumber = QLineEdit()
         self.outMemo = QLineEdit()
         self.outShow = QListWidget()
-        date = QLabel('日期: ')
+        date = QLabel()
         date.setBuddy(self.outDate)
-        outto = QLabel('去向: ')
-        outto.setBuddy(self.outTo)
+        outCompany = QLabel('去向: ')
+        outCompany.setBuddy(self.outCompany)
         kind = QLabel('类别: ')
         kind.setBuddy(self.outKinds)
         name = QLabel('品名: ')
@@ -209,8 +195,8 @@ class Form(QDialog):
         inputLayout = QGridLayout()
         inputLayout.addWidget(date, 0, 0)
         inputLayout.addWidget(self.outDate, 0, 1)
-        inputLayout.addWidget(outto, 1, 0)
-        inputLayout.addWidget(self.outTo, 1, 1)
+        inputLayout.addWidget(outCompany, 1, 0)
+        inputLayout.addWidget(self.outCompany, 1, 1)
         inputLayout.addWidget(kind, 2, 0)
         inputLayout.addWidget(self.outKinds, 2, 1)
         inputLayout.addWidget(name, 3, 0)
@@ -238,7 +224,7 @@ class Form(QDialog):
         okButton.clicked.connect(self.updateDataOut)
         cancelButton.clicked.connect(form.reject)
 
-        self.outTo.addItems(initialData.companyList)
+        self.outCompany.addItems(initialData.companyList)
         self.outKinds.addItems(initialData.kinds.keys())
         nowKind = self.outKinds.currentText()
         self.outName.addItems(initialData.kinds[nowKind])
@@ -257,28 +243,29 @@ class Form(QDialog):
         self.seekDate.setEnabled(False)
         self.checkCompany = QCheckBox('单位: ')
         self.checkName = QCheckBox('品名: ')
-        self.checkDate = QCheckBox('日期: ')
 
-        okButton = QPushButton('提交')
-        cancelButton = QPushButton('取消')
+
+        self.kucunButton = QPushButton('库存量')
+        self.inButton = QPushButton('入库记录')
+        self.outButton = QPushButton('出库记录')
         self.seekShow = QListWidget()
 
         inputBox = QGroupBox()
         inputBox.setTitle('查询条件')
         layout = QGridLayout()
-        layout.addWidget(self.checkDate, 0, 0)
-        layout.addWidget(self.seekDate, 0, 1)
-        layout.addWidget(self.checkCompany, 1, 0)
-        layout.addWidget(self.seekCompany, 1, 1)
-        layout.addWidget(self.checkName, 2, 0)
-        layout.addWidget(self.seekName, 2, 1)
-        layout.addWidget(okButton, 3, 0)
-        layout.addWidget(cancelButton, 3, 1)
+        layout.addWidget(self.checkCompany, 0, 0)
+        layout.addWidget(self.seekCompany, 0, 1)
+        layout.addWidget(self.checkName, 1, 0)
+        layout.addWidget(self.seekName, 1, 1)
+        layout.addWidget(self.kucunButton, 2, 0)
+        layout.addWidget(self.inButton, 2, 1)
+        layout.addWidget(self.outButton, 2, 2)
 
         inputBox.setLayout(layout)
         buttonBox = QHBoxLayout()
-        buttonBox.addWidget(okButton)
-        buttonBox.addWidget(cancelButton)
+        buttonBox.addWidget(self.kucunButton)
+        buttonBox.addWidget(self.inButton)
+        buttonBox.addWidget(self.outButton)
 
         mainLayout = QVBoxLayout()
         mainLayout.addWidget(inputBox)
@@ -292,15 +279,121 @@ class Form(QDialog):
         form = QDialog()
         form.setLayout(mainLayout)
         form.setWindowTitle('记录查询')
-        self.checkDate.toggled.connect(self.seekDate.setEnabled)
+        form.setGeometry(400, 300, 500, 600)
         self.checkCompany.toggled.connect(self.seekCompany.setEnabled)
         self.checkName.toggled.connect(self.seekName.setEnabled)
 
-        okButton.clicked.connect(self.seekData)
-        cancelButton.clicked.connect(form.reject)
+        self.kucunButton.clicked.connect(self.howManyLeft)
+        self.inButton.clicked.connect(self.inRecord)
+        self.outButton.clicked.connect(self.outRecord)
+        self.checkCompany.stateChanged.connect(self.howToShow)
+        self.checkName.stateChanged.connect(self.howToShow)
+
 
         if form.exec_():
             return
+
+    def howToShow(self):
+        if not self.checkCompany.isChecked():
+            if not self.checkName.isChecked():
+                self.kucunButton.clicked.connect(self.howManyLeft)
+                self.inButton.clicked.connect(self.inRecord)
+                self.outButton.clicked.connect(self.outRecord)
+                # if self.checkName.isChecked():
+                #  kucunButton.clicked.connect(self.howManyLeft)
+                # inButton.clicked.connect(self.inRecord)
+                # outButton.clicked.connect(self.outRecord)
+        if self.checkCompany.isChecked():
+            if not self.checkName.isChecked():
+                self.kucunButton.clicked.connect(self.cHowManyLeft)
+
+    def diffName(self):
+        '''当各类变化时,下面可选的品名也跟着变化'''
+        i = self.inKinds.currentText()
+        if self.inKinds.currentText() == i:
+            self.inName.clear()
+            self.inName.addItems(initialData.kinds[i])
+
+    def diffNameOut(self):
+        '''当各类变化时,下面可选的品名也跟着变化'''
+        i = self.outKinds.currentText()
+        if self.outKinds.currentText() == i:
+            self.outName.clear()
+            self.outName.addItems(initialData.kinds[i])
+
+    def howManyLeft(self):
+        conn, curs = self.connectDataBase()
+        curs.execute("""select NAME, SIZE, SUM(NUM) from records group by NAME, SIZE""")
+        n = []
+        for i in curs.fetchall():
+            a = """%s %s 库存量为 %s\n""" % (i[0], i[1], i[2])
+            n.append(a)
+        self.whetherHaveRecords(n)
+        conn.commit()
+        curs.close()
+
+    def inRecord(self):
+        conn, curs = self.connectDataBase()
+        curs.execute("""select TIME, COMPANY, NAME, SIZE, NUM, MEMO, USER from records order by TIME""")
+        n = []
+        for i in curs.fetchall():
+            if i[4] > 0:
+                a = """%s年%s月%s日 管理员%s从 %s 入库 %s %s %s个, 备注: %s \n""" % (i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[6], i[1], i[2], i[3], i[4], i[5])
+                n.append(a)
+        self.whetherHaveRecords(n)
+        conn.commit()
+        curs.close()
+
+    def outRecord(self):
+        conn, curs = self.connectDataBase()
+        curs.execute("""select TIME, COMPANY, NAME, SIZE, NUM, MEMO, USER from records order by TIME""")
+        n = []
+        for i in curs.fetchall():
+            if i[4] < 0:
+                a = """%s年%s月%s日 管理员%s向 %s 发放 %s %s %s个, 备注: %s \n""" % (
+                i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[6], i[1], i[2], i[3], i[4], i[5])
+                n.append(a)
+        self.whetherHaveRecords(n)
+        conn.commit()
+        curs.close()
+
+    def cHowManyLeft(self):
+        conn, curs = self.connectDataBase()
+        curs.execute("""select COMPANY, NAME, SIZE, SUM(NUM) from records where COMPANY = ? group by COMPANY, NAME""",(self.seekCompany.currentText(),))
+        n = []
+        for i in curs.fetchall():
+            a = """%s 共有 %s %s  [%s]个\n""" % (i[0], i[1], i[2], i[3])
+            n.append(a)
+        self.whetherHaveRecords(n)
+        conn.commit()
+        curs.close()
+    def nHowManyLeft(self):
+        pass
+    def cnHowManyLeft(self):
+        pass
+    def cInRecord(self):
+        pass
+    def nInRecord(self):
+        pass
+    def cnInRecord(self):
+        pass
+    def cOutRecord(self):
+        pass
+    def nOutRecord(self):
+        pass
+    def cnOutRecord(self):
+        pass
+
+    def whetherHaveRecords(self, n):
+        if len(n) == 0:
+            QMessageBox.information(self, '无记录', '没有记录!')
+            return
+        elif len(n) > 0:
+            if self.seekShow.count() == 0:
+                self.seekShow.addItems(n)
+            elif self.seekShow.count() != 0:
+                self.seekShow.clear()
+                self.seekShow.addItems(n)
 
 
 
@@ -372,75 +465,62 @@ class Form(QDialog):
     def createDataBase(self, conn, curs):
         curs.execute("""create table if not exists records (
                                               TIME char,
-                                              FF char,
-                                              TT char,
+                                              COMPANY char,
                                               NAME char,
                                               SIZE char,
                                               NUM int,
+                                              MEMO char,
                                               USER char)""")
         conn.commit()
         curs.close()
 
     def updateDataIn(self):
         conn, curs = self.connectDataBase()
-        date = time.localtime()
-        inDate = str(date[0])+'年'+str(date[1])+'月'+str(date[2])+'日'
-        inFrom = self.inFrom.currentText()
-        inTo = '营房仓库'
+        inDate = self.inDate.text()
+        inCompany = self.inCompany.currentText()
         inName = self.inName.currentText()
         inSize = self.inSize.text()
         inNumber = self.inNumber.text()
+        inMemo = self.inMemo.text()
         inUser = self.userName.text()
-        try:
-            if inName != '' and inNumber != '':
-                reply = QMessageBox.question(self, '请确认', '是否入库{}{}{}个?'.format(inName, inSize, inNumber), QMessageBox.Yes|QMessageBox.No)
-                if reply == QMessageBox.Yes:
-                    curs.execute("""insert into records values (?,?,?,?,?,?,?)""", (inDate, inFrom, inTo, inName, inSize, int(inNumber), inUser))
-                    conn.commit()
-                    curs.close()
-                    string = "[OK!] {0}入库{1}{2}{3}个".format(inUser, inName, inSize, inNumber)
-                    self.inShow.addItem(string)
-                else:
-                    return
-            elif inName == '' or inNumber == '':
-                QMessageBox.information(self, 'error', '输入信息不全!')
-        except:
-            QMessageBox.information(self, 'error', '输入信息有误, 请重新输入!')
-        finally:
-            curs.close()
+        if inName != '' and inNumber != '':
+            reply = QMessageBox.question(self, '请确认', '是否入库{}{} [{}]个?'.format(inName, inSize, inNumber), QMessageBox.Yes|QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                curs.execute("""insert into records values (?,?,?,?,?,?,?)""", (inDate, inCompany, inName, inSize, int(inNumber),  inMemo, inUser))
+                conn.commit()
+                curs.close()
+                string = "[OK!] 管理员{0} 入库{1} {2} [{3}]个".format(inUser, inName, inSize, inNumber)
+                self.inShow.addItem(string)
+            else:
+                return
+        elif inName == '' or inNumber == '':
+            QMessageBox.information(self, 'error', '输入信息不全!')
+            return
 
     def updateDataOut(self):
         conn, curs = self.connectDataBase()
-        date = time.localtime()
-        outDate = str(date[0]) + '年' + str(date[1]) + '月' + str(date[2]) + '日'
-        outTo = self.outTo.currentText()
-        outFrom = '营房仓库'
+        outDate = self.outDate.text()
+        outCompany = self.outCompany.currentText()
         outName = self.outName.currentText()
         outSize = self.outSize.text()
         outNumber = self.outNumber.text()
+        outMemo = self.outMemo.text()
         outUser = self.userName.text()
-        try:
-            if outName != '' and outNumber != '':
-                reply = QMessageBox.question(self, '请确认', '是否出库库 {}{}{}个?'.format(outName, outSize, outNumber),
-                                             QMessageBox.Yes | QMessageBox.No)
-                if reply == QMessageBox.Yes:
-                    curs.execute("""insert into records values (?,?,?,?,?,?,?)""",
-                                 (outDate, outFrom, outTo, outName, outSize, -int(outNumber), outUser))
-                    conn.commit()
-                    curs.close()
-                    string = "[OK!] {0}出库{1}{2}{3}个".format(outUser, outName, outSize, outNumber)
-                    self.outShow.addItem(string)
-                else:
-                    return
-            elif outName == '' or outNumber == '':
-                QMessageBox.information(self, 'error', '输入信息不全!')
-        except:
-            QMessageBox.information(self, 'error', '输入信息有误, 请重新输入!')
-        finally:
-            curs.close()
-
-    def seekData(self):
-        conn, curs = self.connectDataBase()
+        if outName != '' and outNumber != '':
+            reply = QMessageBox.question(self, '请确认', '是否入库{}{} [{}]个?'.format(outName, outSize, outNumber),
+                                         QMessageBox.Yes | QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                curs.execute("""insert into records values (?,?,?,?,?,?,?)""",
+                             (outDate, outCompany, outName, outSize, -int(outNumber), outMemo, outUser))
+                conn.commit()
+                curs.close()
+                string = "[OK!] 管理员{0} 出库{1} {2} [{3}]个".format(outUser, outName, outSize, outNumber)
+                self.outShow.addItem(string)
+            else:
+                return
+        elif outName == '' or outNumber == '':
+            QMessageBox.information(self, 'error', '输入信息不全!')
+            return
 
 
 if __name__ == '__main__':
