@@ -312,8 +312,8 @@ class Form(QDialog):
                 self.outButton.clicked.connect(self.caOutRecord)
             elif name != '全部':
                 self.kucunButton.clicked.connect(self.cnHowManyLeft)
-                #self.inButton.clicked.connect(self.cnInRecord)
-                #self.outButton.clicked.connect(self.cnOutRecord)
+                self.inButton.clicked.connect(self.cnInRecord)
+                self.outButton.clicked.connect(self.cnOutRecord)
 
 
 
@@ -331,12 +331,14 @@ class Form(QDialog):
             self.outName.clear()
             self.outName.addItems(initialData.kinds[i])
 
+
+
     def howManyLeft(self):
         conn, curs = self.connectDataBase()
         curs.execute("""select NAME, SIZE, SUM(NUM) from records group by NAME, SIZE""")
         n = []
         for i in curs.fetchall():
-            a = """营房仓库 ===> %s %s 库存量为 [ %s ]\n""" % (i[0], i[1], i[2])
+            a = """营房仓库  %s %s 库存量为 [ %s ]\n""" % (i[0], i[1], i[2])
             n.append(a)
         self.whetherHaveRecords(n)
         conn.commit()
@@ -348,7 +350,7 @@ class Form(QDialog):
         n = []
         for i in curs.fetchall():
             if i[4] > 0:
-                a = """营房仓库 ===> %s年%s月%s日 管理员%s从 %s 入库 %s %s [ %s ]个, 备注: %s \n""" % (i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[6], i[1], i[2], i[3], i[4], i[5])
+                a = """%s年%s月%s日  |  %s ===> 营房仓库  %s %s [ %s ]个, 备注: %s 管理员: %s\n""" % (i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[1], i[2], i[3], i[4], i[5], i[6])
                 n.append(a)
         self.whetherHaveRecords(n)
         conn.commit()
@@ -360,8 +362,7 @@ class Form(QDialog):
         n = []
         for i in curs.fetchall():
             if i[4] < 0:
-                a = """营房仓库 ===> %s年%s月%s日 管理员%s向 %s 发放 %s %s [ %s ]个, 备注: %s \n""" % (
-                i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[6], i[1], i[2], i[3], -i[4], i[5])
+                a = """%s年%s月%s日  |  营房仓库 ===> %s  %s %s [ %s ]个, 备注: %s 管理员: %s\n""" % (i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[1], i[2], i[3], -i[4], i[5], i[6])
                 n.append(a)
         self.whetherHaveRecords(n)
         conn.commit()
@@ -386,8 +387,7 @@ class Form(QDialog):
         n = []
         for i in curs.fetchall():
             if i[4] > 0:
-                a = """营房仓库 ===> %s年%s月%s日 管理员%s从 %s 入库 %s %s [ %s ]个, 备注: %s \n""" % (
-                i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[6], i[1], i[2], i[3], i[4], i[5])
+                a = """%s年%s月%s日  |  %s ===> 营房仓库  %s %s [ %s ]个, 备注: %s 管理员: %s\n""" % (i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[1], i[2], i[3], i[4], i[5], i[6])
                 n.append(a)
         self.whetherHaveRecords(n)
         conn.commit()
@@ -400,8 +400,7 @@ class Form(QDialog):
         n = []
         for i in curs.fetchall():
             if i[4] < 0:
-                a = """营房仓库 ===> %s年%s月%s日 管理员%s向 %s 发放 %s %s [ %s ]个, 备注: %s \n""" % (
-                    i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[6], i[1], i[2], i[3], -i[4], i[5])
+                a = """%s年%s月%s日  |  营房仓库 ===> %s  %s %s [ %s ]个, 备注: %s 管理员: %s\n""" % (i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[1], i[2], i[3], -i[4], i[5], i[6])
                 n.append(a)
         self.whetherHaveRecords(n)
         conn.commit()
@@ -422,11 +421,11 @@ class Form(QDialog):
     def caInRecord(self):
         """某一单位所有物品的入库记录"""
         conn, curs = self.connectDataBase()
-        curs.execute("""select TIME, COMPANY, NAME, SIZE, NUM, MEMO, USER from records where COMPANY = ? group by NAME, SIZE order by TIME""", (self.seekCompany.currentText(),))
+        curs.execute("""select TIME, COMPANY, NAME, SIZE, NUM, MEMO, USER from records where COMPANY = ? order by TIME""", (self.seekCompany.currentText(),))
         n = []
         for i in curs.fetchall():
             if i[4] < 0:
-                a = """%s ===> %s年%s月%s日 管理员%s入库 %s %s [ %s ]个, 备注: %s \n""" % (i[1], i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[6], i[2], i[3], -i[4], i[5])
+                a = """%s年%s月%s日  |  营房仓库 ===> %s  %s %s [ %s ]个, 备注: %s 管理员: %s\n""" % (i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[1], i[2], i[3], -i[4], i[5], i[6])
                 n.append(a)
         self.whetherHaveRecords(n)
         conn.commit()
@@ -439,14 +438,14 @@ class Form(QDialog):
         n = []
         for i in curs.fetchall():
             if i[4] > 0:
-                a = """%s年%s月%s日  |  %s ===> %s  %s %s [ %s ]个  备注: %s  管理员: %s\n""" % (i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[1], '营房仓库', i[2], i[3], i[4], i[5], i[6])
+                a = """%s年%s月%s日  |  %s ===> 营房仓库  %s %s [ %s ]个, 备注: %s 管理员: %s\n""" % (i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[1], i[2], i[3], i[4], i[5], i[6])
                 n.append(a)
         self.whetherHaveRecords(n)
         conn.commit()
         curs.close()
 
     def cnHowManyLeft(self):
-        """某一单位所有物品的入库记录"""
+        """某一单位某一物品的库存量"""
         conn, curs = self.connectDataBase()
         curs.execute(
             """select COMPANY, NAME, SIZE, SUM(NUM) from records where COMPANY = ? and NAME = ? group by NAME, SIZE order by NAME""",
@@ -460,10 +459,33 @@ class Form(QDialog):
         curs.close()
 
     def cnInRecord(self):
-        pass
+        """某一单位某一物品的入库记录"""
+        conn, curs = self.connectDataBase()
+        curs.execute(
+            """select TIME, COMPANY, NAME, SIZE, NUM, MEMO, USER from records where COMPANY = ? and NAME = ? order by TIME""", (self.seekCompany.currentText(), self.seekName.currentText()))
+        n = []
+        for i in curs.fetchall():
+            if i[4] < 0:
+                a = """%s年%s月%s日  |  %s ===> %s  %s %s [ %s ]个  备注: %s  管理员: %s\n""" % (i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], '营房仓库', i[1], i[2], i[3], -i[4], i[5], i[6])
+                n.append(a)
+        self.whetherHaveRecords(n)
+        conn.commit()
+        curs.close()
 
     def cnOutRecord(self):
-        pass
+        """某一单位某一物品的出库记录"""
+        conn, curs = self.connectDataBase()
+        curs.execute(
+            """select TIME, COMPANY, NAME, SIZE, NUM, MEMO, USER from records where COMPANY = ? and NAME = ? order by TIME""", (self.seekCompany.currentText(), self.seekName.currentText()))
+        n = []
+        for i in curs.fetchall():
+            if i[4] > 0:
+                a = """%s年%s月%s日  |  %s ===> %s  %s %s [ %s ]个  备注: %s  管理员: %s\n""" % (
+                i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[1], '营房仓库', i[2], i[3], i[4], i[5], i[6])
+                n.append(a)
+        self.whetherHaveRecords(n)
+        conn.commit()
+        curs.close()
 
     def whetherHaveRecords(self, n):
         if self.seekShow.count() == 0:
