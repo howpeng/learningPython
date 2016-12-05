@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+
+# 问题: 怎么设置一次只能开一个程序,不能同时运行多个程序,否则会乱了数据
+
+
 from PyQt5.QtWidgets import *
 import initialData
 import sqlite3
@@ -234,15 +238,16 @@ class Form(QDialog):
             return  # 而是可以反复填数据
 
     def seekDataWindow(self):
+        companyLabel = QLabel('单位: ')
         self.seekCompany = QComboBox()
-        self.seekCompany.setEnabled(False)
+        companyLabel.setBuddy(self.seekCompany)
+        self.seekCompany.addItems(initialData.companyList)
+        self.seekCompany.setCurrentText(initialData.companyList[0])
+        nameLabel = QLabel('品名: ')
         self.seekName = QComboBox()
-        self.seekName.addItems(initialData.waterList)
-        self.seekName.setEnabled(False)
-        self.seekDate = QDateEdit()
-        self.seekDate.setEnabled(False)
-        self.checkCompany = QCheckBox('单位: ')
-        self.checkName = QCheckBox('品名: ')
+        nameLabel.setBuddy(self.seekName)
+        self.seekName.addItems(initialData.allList)
+        self.seekName.setCurrentText(initialData.allList[0])
 
 
         self.kucunButton = QPushButton('库存量')
@@ -252,60 +257,65 @@ class Form(QDialog):
 
         inputBox = QGroupBox()
         inputBox.setTitle('查询条件')
-        layout = QGridLayout()
-        layout.addWidget(self.checkCompany, 0, 0)
-        layout.addWidget(self.seekCompany, 0, 1)
-        layout.addWidget(self.checkName, 1, 0)
-        layout.addWidget(self.seekName, 1, 1)
-        layout.addWidget(self.kucunButton, 2, 0)
-        layout.addWidget(self.inButton, 2, 1)
-        layout.addWidget(self.outButton, 2, 2)
+        inputLayout = QFormLayout()
+        inputLayout.addRow(companyLabel, self.seekCompany)
+        inputLayout.addRow(nameLabel, self.seekName)
+        inputBox.setLayout(inputLayout)
 
-        inputBox.setLayout(layout)
-        buttonBox = QHBoxLayout()
-        buttonBox.addWidget(self.kucunButton)
-        buttonBox.addWidget(self.inButton)
-        buttonBox.addWidget(self.outButton)
+        buttonBox = QGroupBox()
+        buttonBox.setTitle('功能')
+        buttonLayout = QVBoxLayout()
+        buttonLayout.addWidget(self.kucunButton)
+        buttonLayout.addWidget(self.inButton)
+        buttonLayout.addWidget(self.outButton)
+        buttonBox.setLayout(buttonLayout)
+
+        userLayout = QHBoxLayout()
+        userLayout.addWidget(inputBox)
+        userLayout.addWidget(buttonBox)
 
         mainLayout = QVBoxLayout()
-        mainLayout.addWidget(inputBox)
-        mainLayout.addLayout(buttonBox)
+        mainLayout.addLayout(userLayout)
         mainLayout.addWidget(self.seekShow)
-
-        self.seekCompany.addItems(initialData.companyList)
-        for i in initialData.kinds.keys():
-            self.seekName.addItems(initialData.kinds[i])
 
         form = QDialog()
         form.setLayout(mainLayout)
         form.setWindowTitle('记录查询')
-        form.setGeometry(400, 300, 500, 600)
-        self.checkCompany.toggled.connect(self.seekCompany.setEnabled)
-        self.checkName.toggled.connect(self.seekName.setEnabled)
+        form.setGeometry(400, 300, 620, 600)
 
         self.kucunButton.clicked.connect(self.howManyLeft)
         self.inButton.clicked.connect(self.inRecord)
         self.outButton.clicked.connect(self.outRecord)
-        self.checkCompany.stateChanged.connect(self.howToShow)
-        self.checkName.stateChanged.connect(self.howToShow)
 
+        self.seekCompany.currentTextChanged.connect(self.howToShow)
+        self.seekName.currentTextChanged.connect(self.howToShow)
 
         if form.exec_():
             return
 
     def howToShow(self):
-        if not self.checkCompany.isChecked():
-            if not self.checkName.isChecked():
+        company = self.seekCompany.currentText()
+        name = self.seekName.currentText()
+        if company == '营房仓库':
+            if name == '全部':
                 self.kucunButton.clicked.connect(self.howManyLeft)
                 self.inButton.clicked.connect(self.inRecord)
                 self.outButton.clicked.connect(self.outRecord)
-                # if self.checkName.isChecked():
-                #  kucunButton.clicked.connect(self.howManyLeft)
-                # inButton.clicked.connect(self.inRecord)
-                # outButton.clicked.connect(self.outRecord)
-        if self.checkCompany.isChecked():
-            if not self.checkName.isChecked():
-                self.kucunButton.clicked.connect(self.cHowManyLeft)
+            elif name != '全部':
+                self.kucunButton.clicked.connect(self.nHowManyLeft)
+                self.inButton.clicked.connect(self.nInRecord)
+                self.outButton.clicked.connect(self.nOutRecord)
+        elif company != '营房仓库':
+            if name == '全部':
+                self.kucunButton.clicked.connect(self.caHowManyLeft)
+                self.inButton.clicked.connect(self.caInRecord)
+                self.outButton.clicked.connect(self.caOutRecord)
+            elif name != '全部':
+                self.kucunButton.clicked.connect(self.cnHowManyLeft)
+                #self.inButton.clicked.connect(self.cnInRecord)
+                #self.outButton.clicked.connect(self.cnOutRecord)
+
+
 
     def diffName(self):
         '''当各类变化时,下面可选的品名也跟着变化'''
@@ -326,7 +336,7 @@ class Form(QDialog):
         curs.execute("""select NAME, SIZE, SUM(NUM) from records group by NAME, SIZE""")
         n = []
         for i in curs.fetchall():
-            a = """%s %s 库存量为 %s\n""" % (i[0], i[1], i[2])
+            a = """营房仓库 ===> %s %s 库存量为 [ %s ]\n""" % (i[0], i[1], i[2])
             n.append(a)
         self.whetherHaveRecords(n)
         conn.commit()
@@ -338,7 +348,7 @@ class Form(QDialog):
         n = []
         for i in curs.fetchall():
             if i[4] > 0:
-                a = """%s年%s月%s日 管理员%s从 %s 入库 %s %s %s个, 备注: %s \n""" % (i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[6], i[1], i[2], i[3], i[4], i[5])
+                a = """营房仓库 ===> %s年%s月%s日 管理员%s从 %s 入库 %s %s [ %s ]个, 备注: %s \n""" % (i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[6], i[1], i[2], i[3], i[4], i[5])
                 n.append(a)
         self.whetherHaveRecords(n)
         conn.commit()
@@ -350,50 +360,117 @@ class Form(QDialog):
         n = []
         for i in curs.fetchall():
             if i[4] < 0:
-                a = """%s年%s月%s日 管理员%s向 %s 发放 %s %s %s个, 备注: %s \n""" % (
+                a = """营房仓库 ===> %s年%s月%s日 管理员%s向 %s 发放 %s %s [ %s ]个, 备注: %s \n""" % (
+                i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[6], i[1], i[2], i[3], -i[4], i[5])
+                n.append(a)
+        self.whetherHaveRecords(n)
+        conn.commit()
+        curs.close()
+
+    def nHowManyLeft(self):
+        """仓库中某一物品的库存数量"""
+        conn, curs = self.connectDataBase()
+        curs.execute("""select NAME, SIZE, SUM(NUM) from records where NAME = ? group by SIZE order by SIZE""", (self.seekName.currentText(),))
+        n = []
+        for i in curs.fetchall():
+            a = """营房仓库 共有 %s %s  [ %s ]个\n""" % (i[0], i[1], i[2])
+            n.append(a)
+        self.whetherHaveRecords(n)
+        conn.commit()
+        curs.close()
+
+    def nInRecord(self):
+        """仓库某一物品的入库记录"""
+        conn, curs = self.connectDataBase()
+        curs.execute("""select TIME, COMPANY, NAME, SIZE, NUM, MEMO, USER from records where NAME = ? order by TIME""", (self.seekName.currentText(),))
+        n = []
+        for i in curs.fetchall():
+            if i[4] > 0:
+                a = """营房仓库 ===> %s年%s月%s日 管理员%s从 %s 入库 %s %s [ %s ]个, 备注: %s \n""" % (
                 i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[6], i[1], i[2], i[3], i[4], i[5])
                 n.append(a)
         self.whetherHaveRecords(n)
         conn.commit()
         curs.close()
 
-    def cHowManyLeft(self):
+    def nOutRecord(self):
+        """仓库某一物品的出库记录"""
         conn, curs = self.connectDataBase()
-        curs.execute("""select COMPANY, NAME, SIZE, SUM(NUM) from records where COMPANY = ? group by COMPANY, NAME""",(self.seekCompany.currentText(),))
+        curs.execute("""select TIME, COMPANY, NAME, SIZE, NUM, MEMO, USER from records where NAME = ? order by TIME""", (self.seekName.currentText(),))
         n = []
         for i in curs.fetchall():
-            a = """%s 共有 %s %s  [%s]个\n""" % (i[0], i[1], i[2], i[3])
+            if i[4] < 0:
+                a = """营房仓库 ===> %s年%s月%s日 管理员%s向 %s 发放 %s %s [ %s ]个, 备注: %s \n""" % (
+                    i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[6], i[1], i[2], i[3], -i[4], i[5])
+                n.append(a)
+        self.whetherHaveRecords(n)
+        conn.commit()
+        curs.close()
+
+    def caHowManyLeft(self):
+        """某一单位所有物品库存量"""
+        conn, curs = self.connectDataBase()
+        curs.execute("""select COMPANY, NAME, SIZE, SUM(NUM) from records where COMPANY = ? group by NAME, SIZE order by NAME""", (self.seekCompany.currentText(),))
+        n = []
+        for i in curs.fetchall():
+            a = """%s 共领取 %s %s  [ %s ]个\n""" % (i[0], i[1], i[2], -i[3])
             n.append(a)
         self.whetherHaveRecords(n)
         conn.commit()
         curs.close()
-    def nHowManyLeft(self):
-        pass
+
+    def caInRecord(self):
+        """某一单位所有物品的入库记录"""
+        conn, curs = self.connectDataBase()
+        curs.execute("""select TIME, COMPANY, NAME, SIZE, NUM, MEMO, USER from records where COMPANY = ? group by NAME, SIZE order by TIME""", (self.seekCompany.currentText(),))
+        n = []
+        for i in curs.fetchall():
+            if i[4] < 0:
+                a = """%s ===> %s年%s月%s日 管理员%s入库 %s %s [ %s ]个, 备注: %s \n""" % (i[1], i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[6], i[2], i[3], -i[4], i[5])
+                n.append(a)
+        self.whetherHaveRecords(n)
+        conn.commit()
+        curs.close()
+
+    def caOutRecord(self):
+        """某一单位所有物品的出库记录"""
+        conn, curs = self.connectDataBase()
+        curs.execute("""select TIME, COMPANY, NAME, SIZE, NUM, MEMO, USER from records where COMPANY = ? order by TIME""", (self.seekCompany.currentText(),))
+        n = []
+        for i in curs.fetchall():
+            if i[4] > 0:
+                a = """%s年%s月%s日  |  %s ===> %s  %s %s [ %s ]个  备注: %s  管理员: %s\n""" % (i[0].split('/')[0], i[0].split('/')[1], i[0].split('/')[2], i[1], '营房仓库', i[2], i[3], i[4], i[5], i[6])
+                n.append(a)
+        self.whetherHaveRecords(n)
+        conn.commit()
+        curs.close()
+
     def cnHowManyLeft(self):
-        pass
-    def cInRecord(self):
-        pass
-    def nInRecord(self):
-        pass
+        """某一单位所有物品的入库记录"""
+        conn, curs = self.connectDataBase()
+        curs.execute(
+            """select COMPANY, NAME, SIZE, SUM(NUM) from records where COMPANY = ? and NAME = ? group by NAME, SIZE order by NAME""",
+            (self.seekCompany.currentText(), self.seekName.currentText()))
+        n = []
+        for i in curs.fetchall():
+            a = """%s 共领取 %s %s  [ %s ]个\n""" % (i[0], i[1], i[2], -i[3])
+            n.append(a)
+        self.whetherHaveRecords(n)
+        conn.commit()
+        curs.close()
+
     def cnInRecord(self):
         pass
-    def cOutRecord(self):
-        pass
-    def nOutRecord(self):
-        pass
+
     def cnOutRecord(self):
         pass
 
     def whetherHaveRecords(self, n):
-        if len(n) == 0:
-            QMessageBox.information(self, '无记录', '没有记录!')
-            return
-        elif len(n) > 0:
-            if self.seekShow.count() == 0:
-                self.seekShow.addItems(n)
-            elif self.seekShow.count() != 0:
-                self.seekShow.clear()
-                self.seekShow.addItems(n)
+        if self.seekShow.count() == 0:
+            self.seekShow.addItems(n)
+        elif self.seekShow.count() != 0:
+            self.seekShow.clear()
+            self.seekShow.addItems(n)
 
 
 

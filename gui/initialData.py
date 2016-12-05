@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 companyList = [
+    '营房仓库',
     '上级配发',
     '采购中心统购',
     'ZB1YB',
@@ -37,3 +38,12 @@ kinds = {'营产营具': furnitureList,
          '电料': electricList,
          '其它': othersList
          }
+
+
+allList = ['全部']
+for i in kinds.keys():
+    for a in kinds[i]:
+        allList.append(a)
+
+
+
